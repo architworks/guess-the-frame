@@ -1,0 +1,8 @@
+import { z } from 'zod';
+import { action,createGame,getGame,publicGame,fill } from '@/lib/game';
+export const runtime='nodejs';export const dynamic='force-dynamic';
+const setup=z.object({players:z.array(z.string().trim().min(1).max(24)).min(1).max(8).refine(p=>new Set(p.map(n=>n.toLowerCase())).size===p.length,'Use unique player names.'),preferences:z.string().max(1000),rounds:z.number().int().min(1).max(30),hintLimit:z.number().int().min(0).max(3),timerSeconds:z.union([z.literal(0),z.literal(30),z.literal(60),z.literal(120),z.literal(180),z.literal(300)]).default(120)});
+const move=z.object({id:z.string().uuid(),action:z.enum(['guess','hint','reveal','award','next','retry','end']),cardId:z.string().uuid().optional(),guess:z.string().trim().min(1).max(200).optional(),player:z.number().int().min(0).max(7).optional()});
+function failure(e:unknown){return Response.json({error:e instanceof z.ZodError?e.issues[0].message:e instanceof Error?e.message:'Something went wrong.'},{status:400});}
+export async function GET(req:Request){try{const game=await getGame(new URL(req.url).searchParams.get('id')||'');fill(game);return Response.json(publicGame(game));}catch(e){return failure(e);}}
+export async function POST(req:Request){try{const origin=req.headers.get('origin');if(origin&&origin!==new URL(req.url).origin)return Response.json({error:'Invalid origin.'},{status:403});const input=await req.json();if(input.action==='create')return Response.json(await createGame(setup.parse(input)));const parsed=move.parse(input);if(parsed.action==='guess'&&!parsed.guess)throw new Error('Enter a movie title.');return Response.json(await action(await getGame(parsed.id),parsed));}catch(e){return failure(e);}}
