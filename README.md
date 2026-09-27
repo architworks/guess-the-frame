@@ -1,37 +1,38 @@
 # Guess the Movie
 
-A local, shared-screen movie night built with Next.js, React and Gemini. Players guess aloud, type an answer, and pick who gets the point. No online multiplayer, fixed movie pool or AI feedback system.
+A shared-screen movie night built with Next.js, React and Gemini. Players guess aloud, type an answer, and pick who gets the point. There is no online multiplayer or fixed movie pool.
 
-## Run
+## Run locally
 
 ```sh
 npm install
-# .env.local has already been created; add your API key there.
+cp .env.example .env.local
+# Add your Gemini API key to .env.local.
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. If setting up a fresh checkout, copy `.env.example` to `.env.local` first.
+Open http://127.0.0.1:3000. Model IDs are configurable in `.env.local`:
 
 ```dotenv
 GEMINI_API_KEY=your_key_here
 GEMINI_TEXT_MODEL=gemini-3.5-flash-lite
-GEMINI_IMAGE_MODEL=gemini-2.5-flash-image-preview
+GEMINI_IMAGE_MODEL=gemini-3.1-flash-image
 ```
 
-These are the requested model IDs. Both are configurable; the app never switches models automatically. If Gemini reports an unavailable model, confirm the exact API model identifier available to your account and edit the corresponding env variable. Restart the server after env changes. API credentials stay server-side and env files are ignored by Git.
+## Deploy to Vercel
 
-## How it works
+Deploy the repository as a Next.js app and set the three variables above in the Vercel project's environment settings. Redeploy after changing them. **No database, Blob store, or writable server filesystem is required.**
 
-- Add 1–8 player names, a free-text movie preference, rounds, hint allowance and a round timer (30 seconds, 1, 2, 3 or 5 minutes, or off). The editable preference starts with Bollywood films from 2000 onward.
-- Gemini selects real movies freely and receives all previously selected titles and clue mechanisms, including upcoming cards. Prompts request varied genres, decades, prominence and visual mechanisms. Exact title/alias and year duplicates are rejected with up to three selection attempts.
-- Text concepts are selected sequentially; image requests run asynchronously. The queue targets the current card plus three upcoming cards, and never exceeds the round count.
-- A separate text call judges guesses against the private canonical title and aliases, accepting typos and transliterations. It can request a more specific title. Wrong guesses don't reveal the answer.
-- The countdown defaults to 2 minutes and starts when the card image loads. It survives refreshes in this browser and stops at zero without forcing a reveal or blocking a final guess.
-- Hints open progressively. A correct answer earns one point, assigned once by clicking a player. Revealing the answer awards no points.
-- Setup, cards, images and scores persist locally in `.data/`. The browser stores a session ID so refreshes resume the game. Pending work resumes when the session reconnects after a server restart.
-- Exit ends the session and prevents new generation. API requests already in flight may finish and still incur cost. Closing a tab lets the bounded queue finish; it does not generate an entire game.
+The Next.js API calls Gemini to create each puzzle and judge answers. Generated images are compressed before being returned to the browser, keeping each response below Vercel's 4.5 MB function payload limit. The API key stays on the server. The answer and hints travel in an authenticated, encrypted card token; changing `GEMINI_API_KEY` invalidates cards already stored in browsers.
 
-This uses a long-running local Node server, not serverless hosting. No API key is needed to inspect setup, but starting a game requires a working Gemini key and access to both selected models. Live model quality and availability need validation with that key. The UI uses Google Fonts with local sans-serif fallbacks.
+The browser stores the game, images, scores and up to three upcoming cards in IndexedDB. It starts new generation requests while players guess the current card. A tab can be closed and reopened to resume; a pending or failed card is retried automatically on reopen. Browser storage can be cleared or evicted by the user, so games are local to one browser and device. Previous `.data/` sessions from the original local app are not migrated.
+
+## Play
+
+- Add players, adjust the editable movie preference, and choose rounds, hints and timer. The preference starts with Bollywood films from 2000 onward.
+- The AI selects real films freely and uses encrypted tokens from all previous and queued cards to vary choices and reject duplicates within the game.
+- Wrong guesses leave the answer hidden. Hints open progressively. A correct guess reveals the answer and can award one point to a selected player. Manual reveal awards no point.
+- The countdown defaults to two minutes and starts when the image loads. At zero, players can still guess or reveal.
 
 ## Checks
 
@@ -39,5 +40,3 @@ This uses a long-running local Node server, not serverless hosting. No API key i
 npm test
 npm run build
 ```
-
-Tests mock the Gemini transport and exercise queue limits, unrevealed-answer privacy, incorrect/ambiguous guesses, hint limits, stale-card rejection, single-point awards, skipped rounds, completion and saved scores.
