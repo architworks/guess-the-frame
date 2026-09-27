@@ -1,0 +1,4 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { generate } from '../lib/gemini';
+test('zero quota explains billing while transient rate limits suggest retry',async()=>{const original=globalThis.fetch;const key=process.env.GEMINI_API_KEY;process.env.GEMINI_API_KEY='test';try{globalThis.fetch=async()=>Response.json({error:{message:'Quota exceeded for free tier requests, limit: 0, model: gemini-3.1-flash-image'}},{status:429});await assert.rejects(generate('gemini-3.1-flash-image','test','test',true),/No API quota is available.*billing/);globalThis.fetch=async()=>Response.json({error:{message:'Requests per minute exceeded. Please retry.'}},{status:429});await assert.rejects(generate('gemini-3.1-flash-image','test','test',true),/rate-limiting/);}finally{globalThis.fetch=original;if(key===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=key;}});

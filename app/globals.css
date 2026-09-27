@@ -27,7 +27,7 @@
   .popcorn-doodle{margin-top:35px}
   .game-layout{margin-top:4px;margin-bottom:16px}
   .round-bar{margin-bottom:16px}
-  .movie-card{height:clamp(200px,calc(100dvh - 405px),440px);aspect-ratio:auto;margin-bottom:20px}
+  .movie-card{height:clamp(200px,calc(100dvh - 430px),440px);aspect-ratio:auto;margin-bottom:20px}
   .hint-row{margin-bottom:14px}
   .hint{padding:11px 13px}
   .guess-message{margin:10px 0}
@@ -37,7 +37,7 @@
 @media (min-width:1000px){
   .players-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
-@media (min-width:761px) and (max-height:740px){
+@media (min-width:761px) and (max-height:850px){
   .header{height:64px}
   .intro{padding:0 0 12px}
   .intro h1{font-size:30px;margin:7px 0 5px}
@@ -56,3 +56,5 @@
   .start{padding:12px 24px}
   footer{margin:10px 0}
 }
+
+@media(min-width:761px) and (max-height:680px){.header{height:56px}.intro{padding-bottom:8px}.setup-section{padding-bottom:8px;margin-bottom:8px}.section-heading{margin-bottom:7px}.setup-panel{padding-top:12px;padding-bottom:12px}footer{margin:6px 0}.mini-ticket{margin-top:20px}.popcorn-doodle{margin-top:15px}}
